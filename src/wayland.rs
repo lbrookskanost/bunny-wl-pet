@@ -8,7 +8,7 @@ use wayland_client::{
 //use wayland_protocols::wl_shm::clinet::wl_shm;
 use memmap2::MmapMut;
 use tempfile::tempfile;
-use std::os::unix::io::AsRawFd;
+use std::os::unix::io::AsFd;
 use std::io::Write;
 
 struct AppData{
@@ -120,6 +120,17 @@ impl Dispatch<wl_buffer::WlBuffer, ()> for AppData {
 	}
 }
 
+impl Dispatch<wl_shm_pool::WlShmPool, ()> for AppData {
+    fn event(
+        _: &mut Self,
+        _: &wl_shm_pool::WlShmPool,
+        _: wl_shm_pool::Event,
+        _: &(),
+        _: &Connection,
+        _: &QueueHandle<Self>,
+    ) {}
+}
+
 fn create_buffer(app: &AppData, qh: &QueueHandle<AppData>) -> wl_buffer::WlBuffer{
 		//create tmpfile
 		let mut file = tempfile().unwrap();
@@ -144,7 +155,7 @@ fn create_buffer(app: &AppData, qh: &QueueHandle<AppData>) -> wl_buffer::WlBuffe
 		}
 		//create pool
 		let pool = app.shm.as_ref().unwrap().create_pool(
-			file.as_raw_fd(),
+			file.as_fd(),
 			size as i32,
 			&qh,
 			(),
@@ -159,6 +170,7 @@ fn create_buffer(app: &AppData, qh: &QueueHandle<AppData>) -> wl_buffer::WlBuffe
 			&qh,
 			(),
 		);
+		buffer
 }
 
 
@@ -182,10 +194,10 @@ pub fn run() {
 		.unwrap()
 		.create_surface(&qh, ());
 	//create shm buffer- create tmp, set size, mmap it, write rgba pixels, create buffer
-	/*create_buffer(app, qh);
-	surface.attach(Some(&buffer, 0, 0);
+	let buffer = create_buffer(&app, &qh);
+	surface.attach(Some(&buffer), 0, 0);
 	surface.commit();
-	*/
+	
 	//keep event loop alive
 	loop {
 		event_queue.blocking_dispatch(&mut app).unwrap();

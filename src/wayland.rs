@@ -2,11 +2,14 @@ use wayland_client::{
 	Connection,
 	Dispatch,
 	QueueHandle,
-	protocol::{wl_registry, wl_compositor, wl_surface, wl_shm, wl_display, wl_buffer},
+	protocol::{wl_registry, wl_compositor, wl_surface, wl_shm, wl_display, wl_buffer, wl_shm_pool},
 	globals::registry_queue_init,
 };
 //use wayland_protocols::wl_shm::clinet::wl_shm;
 use memmap2::MmapMut;
+use tempfile::tempfile;
+use std::os::unix::io::AsRawFd;
+use std::io::Write;
 
 struct AppData{
 	compositor: Option<wl_compositor::WlCompositor>,
@@ -100,6 +103,64 @@ impl Dispatch<wl_surface::WlSurface, ()> for AppData {
     }
 }
 
+impl Dispatch<wl_buffer::WlBuffer, ()> for AppData {
+    fn event(
+        _state: &mut Self,
+        _buffer: &wl_buffer::WlBuffer,
+        event: wl_buffer::Event,
+        _: &(),
+        _: &Connection,
+        _: &QueueHandle<Self>,
+    ) {
+		/*match event {
+			wl_buffer::Event::Release => {}
+			_ => {}
+		}
+		*/
+	}
+}
+
+fn create_buffer(app: &AppData, qh: &QueueHandle<AppData>) -> wl_buffer::WlBuffer{
+		//create tmpfile
+		let mut file = tempfile().unwrap();
+		//set length
+		let width = 32; let height = 32;
+		let stride = width * 4;
+		let size = stride * height;
+		file.set_len(size as u64).unwrap();
+		//memory map
+		let mut mmap = unsafe {
+			MmapMut::map_mut(&file).unwrap()
+		};
+		//draw pixels
+		for y in 0..height{
+			for x in 0..width {
+				let i = (y * stride + x * 4) as usize;
+				mmap[i + 0] = 0xFF;
+				mmap[i + 1] = 0x00;
+				mmap[i + 2] = 0xFF;
+				mmap[i + 3] = 0x80;
+			}
+		}
+		//create pool
+		let pool = app.shm.as_ref().unwrap().create_pool(
+			file.as_raw_fd(),
+			size as i32,
+			&qh,
+			(),
+		);
+		//create buffer
+		let buffer = pool.create_buffer(
+			0,
+			width,
+			height,
+			stride,
+			wl_shm::Format::Argb8888,
+			&qh,
+			(),
+		);
+}
+
 
 pub fn run() {
 	//connects to compositor
@@ -120,8 +181,11 @@ pub fn run() {
 		.as_ref()
 		.unwrap()
 		.create_surface(&qh, ());
-	//create shm buffer
-	//attach buffer
+	//create shm buffer- create tmp, set size, mmap it, write rgba pixels, create buffer
+	/*create_buffer(app, qh);
+	surface.attach(Some(&buffer, 0, 0);
+	surface.commit();
+	*/
 	//keep event loop alive
 	loop {
 		event_queue.blocking_dispatch(&mut app).unwrap();

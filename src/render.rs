@@ -10,7 +10,35 @@ use wayland_client::{
 //mod types;
 use crate::types::AppData;
 
-use image::{RgbaImage, ImageBuffer};
+use image::{RgbaImage, ImageBuffer, ImageReader};
+
+//load sprite
+pub fn load_sprite(path: &str) -> RgbaImage {
+    ImageReader::open(path)
+        .unwrap()
+        .decode()
+        .unwrap()
+        .to_rgba8()
+}
+
+//draw sprite
+pub fn draw_sprite(mmap: &mut MmapMut, sprite: &RgbaImage, width: i32, height: i32) {
+    let stride = width * 4;
+    
+    for y in 0..height as u32 {
+        for x in 0..width as u32 {
+            let pixel = sprite.get_pixel(x, y);
+            let i = (y * stride as u32 + x * 4) as usize;
+            
+            // ARGB8888 format (note the order!)
+            mmap[i + 0] = pixel[2];  // Blue
+            mmap[i + 1] = pixel[1];  // Green  
+            mmap[i + 2] = pixel[0];  // Red
+            mmap[i + 3] = pixel[3];  // Alpha
+        }
+    }
+}
+
 
 pub fn create_buffer(app: &AppData, qh: &QueueHandle<AppData>) -> wl_buffer::WlBuffer{
 		//create tmpfile

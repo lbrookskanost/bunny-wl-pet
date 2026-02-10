@@ -6,14 +6,14 @@ use wayland_client::{
 	globals::registry_queue_init,
 };
 
-use wayland_protocols_wlr::layer_shell::v1::client::*;  
-pub mod render;
-use render::create_buffer;
 
-pub struct AppData{
-	compositor: Option<wl_compositor::WlCompositor>,
-	shm: Option<wl_shm::WlShm>,
-}
+//use wayland_protocols_wlr::layer_shell::v1::client as layer_shell; ts don't work
+
+//mod render;
+//mod types;
+use crate::types::AppData;
+use crate::render;
+
 
 impl Dispatch<wl_registry::WlRegistry, ()> for AppData {
 	fn event(
@@ -150,7 +150,7 @@ pub fn run() {
 		.unwrap()
 		.create_surface(&qh, ());
 	//create shm buffer
-	let buffer = create_buffer(&app, &qh);
+	let buffer = render::create_buffer(&app, &qh);
 	surface.attach(Some(&buffer), 0, 0);
 	surface.commit();
 	

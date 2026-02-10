@@ -7,8 +7,8 @@ use wayland_client::{
 	protocol::{wl_buffer, wl_shm, wl_shm_pool},
 };
 
-pub mod wayland;
-use wayland::AppData;
+//mod types;
+use crate::types::AppData;
 
 use image::{RgbaImage, ImageBuffer};
 

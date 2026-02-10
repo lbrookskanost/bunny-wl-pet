@@ -2,12 +2,11 @@ use wayland_client::{
 	Connection,
 	Dispatch,
 	QueueHandle,
-	protocol::{wl_registry, wl_compositor, wl_surface, wl_shm, wl_display, wl_buffer, wl_shm_pool},
+	protocol::{wl_registry, wl_compositor, wl_surface, wl_shm, wl_display, wl_buffer, wl_shm_pool, wl_callback},
 	globals::registry_queue_init,
 };
 
-
-//use wayland_protocols_wlr::layer_shell::v1::client as layer_shell; ts don't work
+use wayland_protocols::xdg::shell::client::{xdg_wm_base, xdg_surface, xdg_toplevel};
 
 //mod render;
 //mod types;
@@ -130,6 +129,29 @@ impl Dispatch<wl_shm_pool::WlShmPool, ()> for AppData {
     ) {}
 }
 
+impl Dispatch<wl_callback::WlCallback, ()> for AppData {
+    fn event(
+        state: &mut Self,
+        _: &wl_callback::WlCallback,
+        event: wl_callback::Event,
+        _: &(),
+        _: &Connection,
+        qh: &QueueHandle<Self>,
+    ) {
+        match event {
+            wl_callback::Event::Done { .. } => {
+                // 1. update animation state
+                // 2. draw new sprite to buffer  
+                // 3. attach buffer to surface
+                // 4. request NEXT frame callback
+                //surface.frame(qh, ());
+                //surface.commit();
+            }
+            _ => {}
+        }
+    }
+}
+
 pub fn run() {
 	//connects to compositor
 	let conn = Connection::connect_to_env().unwrap();
@@ -142,6 +164,7 @@ pub fn run() {
 	let mut app = AppData {
 		compositor: None,
 		shm: None,
+		surface: None,
 	};
 	event_queue.roundtrip(&mut app).unwrap();
 	let surface = app
@@ -151,7 +174,9 @@ pub fn run() {
 		.create_surface(&qh, ());
 	//create shm buffer
 	let buffer = render::create_buffer(&app, &qh);
+	app.surface = Some(surface.clone());
 	surface.attach(Some(&buffer), 0, 0);
+	surface.frame(&qh, ());
 	surface.commit();
 	
 	//keep event loop alive

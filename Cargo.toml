@@ -5,8 +5,8 @@ edition = "2024"
 
 [dependencies]
 wayland-client = "0.31"
-wayland-protocols = "0.32"
-wayland-protocols-wlr = "0.3"
+wayland-protocols = { version = "0.32", features = ["client"] }
+#wayland-protocols-wlr = "0.3"
 memmap2 = "0.9"
 tempfile = "3"
 image = "0.25"

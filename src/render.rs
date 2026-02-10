@@ -30,7 +30,7 @@ pub fn draw_sprite(mmap: &mut MmapMut, sprite: &RgbaImage, width: i32, height: i
             let pixel = sprite.get_pixel(x, y);
             let i = (y * stride as u32 + x * 4) as usize;
             
-            // ARGB8888 format (note the order!)
+            // ARGB8888 format 
             mmap[i + 0] = pixel[2];  // Blue
             mmap[i + 1] = pixel[1];  // Green  
             mmap[i + 2] = pixel[0];  // Red

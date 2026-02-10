@@ -35,6 +35,10 @@ impl Dispatch<wl_registry::WlRegistry, ()> for AppData {
 						.bind::<wl_shm::WlShm, _, _> (name, version, qh, ());
 					state.shm = Some(shm);
 				}
+				"xdg_wm_base" => {  
+                    let xdg = registry.bind::<xdg_wm_base::XdgWmBase, _, _>(name, version, qh, ());
+                    state.xdg_wm_base = Some(xdg);
+                }
 				_ => {}
 			}		
 		}
@@ -110,11 +114,7 @@ impl Dispatch<wl_buffer::WlBuffer, ()> for AppData {
         _: &Connection,
         _: &QueueHandle<Self>,
     ) {
-		/*match event {
-			wl_buffer::Event::Release => {}
-			_ => {}
-		}
-		*/
+		//empty
 	}
 }
 
@@ -126,7 +126,9 @@ impl Dispatch<wl_shm_pool::WlShmPool, ()> for AppData {
         _: &(),
         _: &Connection,
         _: &QueueHandle<Self>,
-    ) {}
+    ) {
+		//empty
+	}
 }
 
 impl Dispatch<wl_callback::WlCallback, ()> for AppData {
@@ -152,6 +154,50 @@ impl Dispatch<wl_callback::WlCallback, ()> for AppData {
     }
 }
 
+impl Dispatch<xdg_wm_base::XdgWmBase, ()> for AppData {
+    fn event(
+        _: &mut Self,
+        _: &xdg_wm_base::XdgWmBase,
+        _: xdg_wm_base::Event,
+        _: &(),
+        _: &Connection,
+        _: &QueueHandle<Self>,
+    ) {
+		//empty
+	}
+}
+
+impl Dispatch<xdg_surface::XdgSurface, ()> for AppData {
+    fn event(
+        _: &mut Self,
+        xdg_surface: &xdg_surface::XdgSurface,
+        event: xdg_surface::Event,
+        _: &(),
+        _: &Connection,
+        _: &QueueHandle<Self>,
+    ) {
+		match event {
+            xdg_surface::Event::Configure { serial } => {
+                xdg_surface.ack_configure(serial);
+            }
+            _ => {}
+        }
+	}
+}
+
+impl Dispatch<xdg_toplevel::XdgToplevel, ()> for AppData {
+    fn event(
+        _: &mut Self,
+        _: &xdg_toplevel::XdgToplevel,
+        _: xdg_toplevel::Event,
+        _: &(),
+        _: &Connection,
+        _: &QueueHandle<Self>,
+    ) {
+		//empty
+	}
+}
+
 pub fn run() {
 	//connects to compositor
 	let conn = Connection::connect_to_env().unwrap();
@@ -165,6 +211,9 @@ pub fn run() {
 		compositor: None,
 		shm: None,
 		surface: None,
+		xdg_wm_base: None,
+		xdg_surface: None,
+	    xdg_toplevel: None,
 	};
 	event_queue.roundtrip(&mut app).unwrap();
 	let surface = app
@@ -172,13 +221,23 @@ pub fn run() {
 		.as_ref()
 		.unwrap()
 		.create_surface(&qh, ());
+	let xdg_surface = app
+		.xdg_wm_base
+		.as_ref()
+		.unwrap()
+		.get_xdg_surface(&surface, &qh, ());
+	let xdg_toplevel = xdg_surface.get_toplevel(&qh, ());
+	xdg_toplevel.set_title("ferris".to_string());
 	//create shm buffer
-	let buffer = render::create_buffer(&app, &qh);
 	app.surface = Some(surface.clone());
+	app.xdg_surface = Some(xdg_surface.clone());
+	surface.commit();
+	event_queue.roundtrip(&mut app).unwrap();
+	
+	let buffer = render::create_buffer(&app, &qh);
 	surface.attach(Some(&buffer), 0, 0);
 	surface.frame(&qh, ());
 	surface.commit();
-	
 	//keep event loop alive
 	loop {
 		event_queue.blocking_dispatch(&mut app).unwrap();

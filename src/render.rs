@@ -79,6 +79,6 @@ pub fn create_buffer(app: &AppData, qh: &QueueHandle<AppData>) -> wl_buffer::WlB
 			&qh,
 			(),
 		);
-		buffer
+		return buffer;
 }
 

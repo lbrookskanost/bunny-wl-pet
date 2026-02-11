@@ -10,8 +10,8 @@ use wayland_protocols_wlr::layer_shell::v1::client::{
     zwlr_layer_shell_v1,
     zwlr_layer_surface_v1,
 };
-//mod render;
-//mod types;
+//import types states and initialize that at the beginning
+use crate::types::states;
 use crate::types::AppData;
 use crate::render;
 
@@ -144,10 +144,12 @@ impl Dispatch<wl_callback::WlCallback, ()> for AppData {
     ) {
         match event {
             wl_callback::Event::Done { .. } => {
-                // 1. update animation state
-                // 2. draw new sprite to buffer  
-                // 3. attach buffer to surface
-                // 4. request NEXT frame callback
+                // Call to animation.rs to see what we're cooking
+                
+                //In call, pass current state.
+                // Draw new sprite to buffer  
+                // Attach buffer to surface
+                // Request NEXT frame callback
                 //surface.frame(qh, ());
                 //surface.commit();
             }

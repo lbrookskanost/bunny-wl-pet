@@ -14,3 +14,8 @@ pub struct AppData{
 	pub layer_shell: Option<zwlr_layer_shell_v1::ZwlrLayerShellV1>, 
     pub layer_surface: Option<zwlr_layer_surface_v1::ZwlrLayerSurfaceV1>
 }
+
+pub struct states{
+	pub anim: &str,
+	pub cell: u8
+}

@@ -154,7 +154,6 @@ dependencies = [
  "memmap2",
  "tempfile",
  "wayland-client",
- "wayland-protocols",
  "wayland-protocols-wlr",
 ]
 

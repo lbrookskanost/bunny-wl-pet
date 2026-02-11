@@ -6,8 +6,10 @@ use wayland_client::{
 	globals::registry_queue_init,
 };
 
-use wayland_protocols::xdg::shell::client::{xdg_wm_base, xdg_surface, xdg_toplevel};
-
+use wayland_protocols_wlr::layer_shell::v1::client::{
+    zwlr_layer_shell_v1,
+    zwlr_layer_surface_v1,
+};
 //mod render;
 //mod types;
 use crate::types::AppData;
@@ -35,11 +37,11 @@ impl Dispatch<wl_registry::WlRegistry, ()> for AppData {
 						.bind::<wl_shm::WlShm, _, _> (name, version, qh, ());
 					state.shm = Some(shm);
 				}
-				"xdg_wm_base" => {  
-                    let xdg = registry.bind::<xdg_wm_base::XdgWmBase, _, _>(name, version, qh, ());
-                    state.xdg_wm_base = Some(xdg);
+				"zwlr_layer_shell_v1" => {  
+                    let layer_shell = registry.bind::<zwlr_layer_shell_v1::ZwlrLayerShellV1, _, _>(name, version, qh, ());
+                    state.layer_shell = Some(layer_shell);
                 }
-				_ => {}
+                _ => {}
 			}		
 		}
 	}
@@ -154,48 +156,38 @@ impl Dispatch<wl_callback::WlCallback, ()> for AppData {
     }
 }
 
-impl Dispatch<xdg_wm_base::XdgWmBase, ()> for AppData {
+impl Dispatch<zwlr_layer_shell_v1::ZwlrLayerShellV1, ()> for AppData {
     fn event(
         _: &mut Self,
-        _: &xdg_wm_base::XdgWmBase,
-        _: xdg_wm_base::Event,
+        _: &zwlr_layer_shell_v1::ZwlrLayerShellV1,
+        _: zwlr_layer_shell_v1::Event,
         _: &(),
         _: &Connection,
         _: &QueueHandle<Self>,
     ) {
-		//empty
-	}
+        // empty
+    }
 }
 
-impl Dispatch<xdg_surface::XdgSurface, ()> for AppData {
+impl Dispatch<zwlr_layer_surface_v1::ZwlrLayerSurfaceV1, ()> for AppData {
     fn event(
         _: &mut Self,
-        xdg_surface: &xdg_surface::XdgSurface,
-        event: xdg_surface::Event,
+        layer_surface: &zwlr_layer_surface_v1::ZwlrLayerSurfaceV1,
+        event: zwlr_layer_surface_v1::Event,
         _: &(),
         _: &Connection,
         _: &QueueHandle<Self>,
     ) {
-		match event {
-            xdg_surface::Event::Configure { serial } => {
-                xdg_surface.ack_configure(serial);
+        match event {
+            zwlr_layer_surface_v1::Event::Configure { serial, .. } => {
+                layer_surface.ack_configure(serial);
+            }
+            zwlr_layer_surface_v1::Event::Closed => {
+        
             }
             _ => {}
         }
-	}
-}
-
-impl Dispatch<xdg_toplevel::XdgToplevel, ()> for AppData {
-    fn event(
-        _: &mut Self,
-        _: &xdg_toplevel::XdgToplevel,
-        _: xdg_toplevel::Event,
-        _: &(),
-        _: &Connection,
-        _: &QueueHandle<Self>,
-    ) {
-		//empty
-	}
+    }
 }
 
 pub fn run() {
@@ -211,9 +203,8 @@ pub fn run() {
 		compositor: None,
 		shm: None,
 		surface: None,
-		xdg_wm_base: None,
-		xdg_surface: None,
-	    xdg_toplevel: None,
+	    layer_shell: None,
+	    layer_surface: None,
 	};
 	event_queue.roundtrip(&mut app).unwrap();
 	let surface = app
@@ -221,16 +212,19 @@ pub fn run() {
 		.as_ref()
 		.unwrap()
 		.create_surface(&qh, ());
-	let xdg_surface = app
-		.xdg_wm_base
-		.as_ref()
-		.unwrap()
-		.get_xdg_surface(&surface, &qh, ());
-	let xdg_toplevel = xdg_surface.get_toplevel(&qh, ());
-	xdg_toplevel.set_title("ferris".to_string());
+	let layer_surface = app.layer_shell.as_ref().unwrap().get_layer_surface(
+        &surface,
+        None,  
+        zwlr_layer_shell_v1::Layer::Overlay,  
+        "ferris".to_string(),  
+        &qh,
+        (),
+    );
+    layer_surface.set_size(32, 32);  // set size
+    layer_surface.set_anchor(zwlr_layer_surface_v1::Anchor::empty()); 
 	//create shm buffer
 	app.surface = Some(surface.clone());
-	app.xdg_surface = Some(xdg_surface.clone());
+	app.layer_surface = Some(layer_surface);
 	surface.commit();
 	event_queue.roundtrip(&mut app).unwrap();
 	

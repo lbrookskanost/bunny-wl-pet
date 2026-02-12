@@ -16,6 +16,6 @@ pub struct AppData{
 }
 
 pub struct states{
-	pub anim: &str,
+	pub anim: String,
 	pub cell: u8
 }

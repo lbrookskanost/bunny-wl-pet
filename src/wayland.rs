@@ -194,6 +194,7 @@ impl Dispatch<zwlr_layer_surface_v1::ZwlrLayerSurfaceV1, ()> for AppData {
 
 pub fn run() {
 	//connects to compositor
+	let initial_state = states{anim: "sprites/test.png".to_string(), cell: 0,};
 	let conn = Connection::connect_to_env().unwrap();
 	//creates root Wayland object, event queue
 	let display = conn.display();
@@ -230,7 +231,7 @@ pub fn run() {
 	surface.commit();
 	event_queue.roundtrip(&mut app).unwrap();
 	
-	let buffer = render::create_buffer(&app, &qh);
+	let buffer = render::create_buffer(&app, &qh, &initial_state);
 	surface.attach(Some(&buffer), 0, 0);
 	surface.frame(&qh, ());
 	surface.commit();

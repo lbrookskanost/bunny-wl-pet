@@ -9,6 +9,7 @@ use wayland_client::{
 
 //mod types;
 use crate::types::AppData;
+use crate::types::states;
 use crate::animation;
 
 use image::{RgbaImage, ImageBuffer, ImageReader};
@@ -41,7 +42,7 @@ pub fn draw_sprite(mmap: &mut MmapMut, sprite: &RgbaImage, width: i32, height: i
 }
 
 
-pub fn create_buffer(app: &AppData, qh: &QueueHandle<AppData>) -> wl_buffer::WlBuffer{
+pub fn create_buffer(app: &AppData, qh: &QueueHandle<AppData>, initial_state: &states) -> wl_buffer::WlBuffer{
 		//create tmpfile
 		let mut file = tempfile().unwrap();
 		//set length
@@ -54,7 +55,7 @@ pub fn create_buffer(app: &AppData, qh: &QueueHandle<AppData>) -> wl_buffer::WlB
 			MmapMut::map_mut(&file).unwrap()
 		};
 		//load sprite
-		let path = animation::run();
+		let path = animation::run(initial_state);
 		draw_sprite(&mut mmap, &load_sprite(&path), width, height);
 		//create pool
 		let pool = app.shm.as_ref().unwrap().create_pool(

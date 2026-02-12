@@ -3,7 +3,6 @@ use wayland_client::{
 	Dispatch,
 	QueueHandle,
 	protocol::{wl_registry, wl_compositor, wl_surface, wl_shm, wl_display, wl_buffer, wl_shm_pool, wl_callback},
-	globals::registry_queue_init,
 };
 
 use wayland_protocols_wlr::layer_shell::v1::client::{
@@ -111,7 +110,7 @@ impl Dispatch<wl_buffer::WlBuffer, ()> for AppData {
     fn event(
         _state: &mut Self,
         _buffer: &wl_buffer::WlBuffer,
-        event: wl_buffer::Event,
+        _event: wl_buffer::Event,
         _: &(),
         _: &Connection,
         _: &QueueHandle<Self>,
@@ -135,12 +134,12 @@ impl Dispatch<wl_shm_pool::WlShmPool, ()> for AppData {
 
 impl Dispatch<wl_callback::WlCallback, ()> for AppData {
     fn event(
-        state: &mut Self,
+        _state: &mut Self,
         _: &wl_callback::WlCallback,
         event: wl_callback::Event,
         _: &(),
         _: &Connection,
-        qh: &QueueHandle<Self>,
+        _qh: &QueueHandle<Self>,
     ) {
         match event {
             wl_callback::Event::Done { .. } => {

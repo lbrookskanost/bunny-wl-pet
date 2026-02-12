@@ -4,7 +4,7 @@ use std::os::unix::io::AsFd;
 
 use wayland_client::{
 	QueueHandle,
-	protocol::{wl_buffer, wl_shm, wl_shm_pool},
+	protocol::{wl_buffer, wl_shm},
 };
 
 //mod types;
@@ -12,7 +12,7 @@ use crate::types::AppData;
 use crate::types::states;
 use crate::animation;
 
-use image::{RgbaImage, ImageBuffer, ImageReader};
+use image::{RgbaImage, ImageReader};
 
 //load sprite
 pub fn load_sprite(path: &str) -> RgbaImage {
@@ -44,7 +44,7 @@ pub fn draw_sprite(mmap: &mut MmapMut, sprite: &RgbaImage, width: i32, height: i
 
 pub fn create_buffer(app: &AppData, qh: &QueueHandle<AppData>, initial_state: &states) -> wl_buffer::WlBuffer{
 		//create tmpfile
-		let mut file = tempfile().unwrap();
+		let file = tempfile().unwrap();
 		//set length
 		let width = 64; let height = 64;
 		let stride = width * 4;
